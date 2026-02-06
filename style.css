@@ -172,18 +172,23 @@ header h1 {
   flex: 1;
   min-width: 0;
 }
-.session-info .title {
-  font-weight: 600;
+.session-info .speaker {
+  font-weight: 700;
   font-size: 0.95rem;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
   word-wrap: break-word;
 }
-.session-info .meta {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
+.session-info .room {
+  font-size: 0.82rem;
+  color: var(--text);
+  font-weight: 500;
+  margin-bottom: 2px;
 }
-.session-info .meta span + span::before {
-  content: ' \00b7 ';
+.session-info .title {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  word-wrap: break-word;
+  line-height: 1.3;
 }
 .session-starred {
   flex-shrink: 0;

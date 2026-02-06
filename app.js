@@ -145,10 +145,7 @@
       html += `<div class="day-group">`;
       html += `<h2>${formatDateHeading(dateKey === 'no-date' ? '' : dateKey)}</h2>`;
       groups[dateKey].forEach(s => {
-        const metaParts = [];
-        if (s.speaker) metaParts.push(`<span>${esc(s.speaker)}</span>`);
-        if (s.type) metaParts.push(`<span>${esc(s.type)}</span>`);
-        if (s.location) metaParts.push(`<span>${esc(s.location)}</span>`);
+        const roomType = [s.type, s.location].filter(Boolean).join(' \u00b7 ');
         html += `
           <div class="session-card" data-id="${s.id}">
             <div class="session-time">
@@ -156,8 +153,9 @@
               <div class="end">${formatTime(s.end)}</div>
             </div>
             <div class="session-info">
+              <div class="speaker">${esc(s.speaker)}</div>
+              <div class="room">${esc(roomType)}</div>
               <div class="title">${esc(s.title)}</div>
-              <div class="meta">${metaParts.join('')}</div>
             </div>
             <button class="session-starred ${s.starred ? 'active' : ''}" data-star="${s.id}">&#9733;</button>
           </div>`;
