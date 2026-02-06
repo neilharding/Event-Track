@@ -42,23 +42,21 @@
 
   // Settings modal
   const settingsModal = document.getElementById('settings-modal');
-  const apiKeyInput = document.getElementById('api-key-input');
   const eventNameInput = document.getElementById('event-name-input');
   const saveSettingsBtn = document.getElementById('save-settings-btn');
 
   // Add modal
   const addModal = document.getElementById('add-modal');
   const tabs = document.querySelectorAll('.tab');
-  const tabAi = document.getElementById('tab-ai');
+  const tabCsv = document.getElementById('tab-csv');
   const tabManual = document.getElementById('tab-manual');
 
-  // AI controls
-  const aiInput = document.getElementById('ai-input');
-  const aiParseBtn = document.getElementById('ai-parse-btn');
-  const aiStatus = document.getElementById('ai-status');
-  const aiResults = document.getElementById('ai-results');
-  const aiResultsList = document.getElementById('ai-results-list');
-  const aiAddAllBtn = document.getElementById('ai-add-all-btn');
+  // CSV controls
+  const csvFile = document.getElementById('csv-file');
+  const csvStatus = document.getElementById('csv-status');
+  const csvResults = document.getElementById('csv-results');
+  const csvResultsList = document.getElementById('csv-results-list');
+  const csvAddAllBtn = document.getElementById('csv-add-all-btn');
 
   // Manual controls
   const manualTitle = document.getElementById('manual-title');
@@ -208,14 +206,12 @@
   // ── Settings ──
   settingsBtn.addEventListener('click', () => {
     const s = loadSettings();
-    apiKeyInput.value = s.apiKey || '';
     eventNameInput.value = s.eventName || '';
     openModal(settingsModal);
   });
 
   saveSettingsBtn.addEventListener('click', () => {
     const s = loadSettings();
-    s.apiKey = apiKeyInput.value.trim();
     s.eventName = eventNameInput.value.trim();
     saveSettings(s);
     closeModal(settingsModal);
@@ -225,10 +221,10 @@
   // ── Add Session Modal ──
   addBtn.addEventListener('click', () => {
     // Reset forms
-    aiInput.value = '';
-    aiStatus.classList.add('hidden');
-    aiResults.classList.add('hidden');
-    aiResultsList.innerHTML = '';
+    csvFile.value = '';
+    csvStatus.classList.add('hidden');
+    csvResults.classList.add('hidden');
+    csvResultsList.innerHTML = '';
     manualTitle.value = '';
     manualDate.value = '';
     manualStart.value = '';
@@ -244,12 +240,12 @@
     t.addEventListener('click', () => {
       tabs.forEach(x => x.classList.remove('active'));
       t.classList.add('active');
-      if (t.dataset.tab === 'ai') {
-        tabAi.classList.add('active');
+      if (t.dataset.tab === 'csv') {
+        tabCsv.classList.add('active');
         tabManual.classList.remove('active');
       } else {
         tabManual.classList.add('active');
-        tabAi.classList.remove('active');
+        tabCsv.classList.remove('active');
       }
     });
   });
@@ -274,60 +270,111 @@
     render();
   });
 
-  // ── Claude AI Parse ──
+  // ── CSV Upload ──
   let parsedSessions = [];
 
-  aiParseBtn.addEventListener('click', async () => {
-    const text = aiInput.value.trim();
-    if (!text) { aiInput.focus(); return; }
+  function parseCSV(text) {
+    const lines = text.split(/\r?\n/).filter(line => line.trim());
+    if (lines.length < 2) throw new Error('CSV must have a header row and at least one data row.');
 
-    const settings = loadSettings();
-    if (!settings.apiKey) {
-      aiStatus.textContent = 'Please set your Anthropic API key in Settings first.';
-      aiStatus.className = 'status error';
-      aiStatus.classList.remove('hidden');
-      return;
+    const headerLine = lines[0];
+    const headers = parseCSVRow(headerLine).map(h => h.trim().toLowerCase());
+
+    const knownFields = ['title', 'date', 'start', 'end', 'location', 'speaker', 'notes'];
+    const colMap = {};
+    headers.forEach((h, i) => {
+      // Match common synonyms
+      if (h === 'title' || h === 'name' || h === 'session') colMap.title = i;
+      else if (h === 'date' || h === 'day') colMap.date = i;
+      else if (h === 'start' || h === 'start time' || h === 'start_time' || h === 'from') colMap.start = i;
+      else if (h === 'end' || h === 'end time' || h === 'end_time' || h === 'to') colMap.end = i;
+      else if (h === 'location' || h === 'room' || h === 'hall' || h === 'venue' || h === 'track') colMap.location = i;
+      else if (h === 'speaker' || h === 'presenter' || h === 'author') colMap.speaker = i;
+      else if (h === 'notes' || h === 'description' || h === 'details') colMap.notes = i;
+    });
+
+    if (colMap.title === undefined) throw new Error('CSV must have a "title" (or "name" / "session") column.');
+
+    const results = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCSVRow(lines[i]);
+      const get = key => (colMap[key] !== undefined ? (cols[colMap[key]] || '').trim() : '');
+      const title = get('title');
+      if (!title) continue;
+      results.push({
+        title,
+        date: get('date'),
+        start: get('start'),
+        end: get('end'),
+        location: get('location'),
+        speaker: get('speaker'),
+        notes: get('notes'),
+      });
     }
+    return results;
+  }
 
-    aiParseBtn.disabled = true;
-    aiStatus.textContent = 'Asking Claude to parse sessions...';
-    aiStatus.className = 'status loading';
-    aiStatus.classList.remove('hidden');
-    aiResults.classList.add('hidden');
-
-    try {
-      const result = await callClaude(settings.apiKey, text);
-      parsedSessions = result;
-
-      if (parsedSessions.length === 0) {
-        aiStatus.textContent = 'Claude could not find any sessions in that text. Try adding more detail.';
-        aiStatus.className = 'status error';
-        aiStatus.classList.remove('hidden');
+  function parseCSVRow(line) {
+    const cols = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+        else if (ch === '"') { inQuotes = false; }
+        else { cur += ch; }
       } else {
-        aiStatus.textContent = `Found ${parsedSessions.length} session(s).`;
-        aiStatus.className = 'status success';
-        aiStatus.classList.remove('hidden');
+        if (ch === '"') { inQuotes = true; }
+        else if (ch === ',') { cols.push(cur); cur = ''; }
+        else { cur += ch; }
+      }
+    }
+    cols.push(cur);
+    return cols;
+  }
 
-        aiResultsList.innerHTML = '';
+  csvFile.addEventListener('change', () => {
+    const file = csvFile.files[0];
+    if (!file) return;
+
+    csvStatus.classList.add('hidden');
+    csvResults.classList.add('hidden');
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        parsedSessions = parseCSV(reader.result);
+        if (parsedSessions.length === 0) {
+          csvStatus.textContent = 'No sessions found in the CSV. Make sure there is data below the header row.';
+          csvStatus.className = 'status error';
+          csvStatus.classList.remove('hidden');
+          return;
+        }
+
+        csvStatus.textContent = `Found ${parsedSessions.length} session(s).`;
+        csvStatus.className = 'status success';
+        csvStatus.classList.remove('hidden');
+
+        csvResultsList.innerHTML = '';
         parsedSessions.forEach(s => {
           const div = document.createElement('div');
           div.className = 'ai-session-preview';
           const meta = [s.date, formatTime(s.start) + (s.end ? ' - ' + formatTime(s.end) : ''), s.location, s.speaker].filter(Boolean).join(' \u00b7 ');
           div.innerHTML = `<div class="preview-title">${esc(s.title)}</div><div class="preview-meta">${esc(meta)}</div>`;
-          aiResultsList.appendChild(div);
+          csvResultsList.appendChild(div);
         });
-        aiResults.classList.remove('hidden');
+        csvResults.classList.remove('hidden');
+      } catch (err) {
+        csvStatus.textContent = 'Error: ' + err.message;
+        csvStatus.className = 'status error';
+        csvStatus.classList.remove('hidden');
       }
-    } catch (err) {
-      aiStatus.textContent = 'Error: ' + err.message;
-      aiStatus.className = 'status error';
-      aiStatus.classList.remove('hidden');
-    }
-
-    aiParseBtn.disabled = false;
+    };
+    reader.readAsText(file);
   });
 
-  aiAddAllBtn.addEventListener('click', () => {
+  csvAddAllBtn.addEventListener('click', () => {
     parsedSessions.forEach(s => {
       sessions.push({ ...s, id: generateId(), starred: false });
     });
@@ -336,50 +383,6 @@
     closeModal(addModal);
     render();
   });
-
-  async function callClaude(apiKey, text) {
-    const systemPrompt = `You are a schedule parser. The user will give you text describing one or more event sessions. Extract each session and return a JSON array. Each object must have these fields:
-- "title": string (session/talk title)
-- "date": string in YYYY-MM-DD format (use your best guess for the year if not stated; assume the current or next occurrence)
-- "start": string in HH:MM 24-hour format
-- "end": string in HH:MM 24-hour format (if not given, leave as empty string)
-- "location": string (room/hall/track, or empty string)
-- "speaker": string (speaker name, or empty string)
-- "notes": string (any extra info, or empty string)
-
-Return ONLY valid JSON. No markdown, no explanation, just the array.`;
-
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: text }],
-      }),
-    });
-
-    if (!resp.ok) {
-      const errBody = await resp.text();
-      throw new Error(`API error ${resp.status}: ${errBody}`);
-    }
-
-    const data = await resp.json();
-    const content = data.content?.[0]?.text || '[]';
-
-    // Extract JSON from response (handle potential markdown wrapping)
-    let jsonStr = content.trim();
-    const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fenceMatch) jsonStr = fenceMatch[1].trim();
-
-    return JSON.parse(jsonStr);
-  }
 
   // ── Edit Session ──
   scheduleList.addEventListener('click', e => {

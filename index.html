@@ -23,9 +23,6 @@
           <button class="close-btn" data-close="settings-modal">&times;</button>
         </div>
         <div class="modal-body">
-          <label for="api-key-input">Anthropic API Key</label>
-          <input type="password" id="api-key-input" placeholder="sk-ant-...">
-          <p class="hint">Your key is stored locally in your browser and never sent anywhere except the Anthropic API.</p>
           <label for="event-name-input">Event Name</label>
           <input type="text" id="event-name-input" placeholder="e.g. React Summit 2026">
           <button id="save-settings-btn" class="btn primary">Save Settings</button>
@@ -41,22 +38,22 @@
           <button class="close-btn" data-close="add-modal">&times;</button>
         </div>
         <div class="modal-body">
-          <!-- Tabs for manual vs AI -->
+          <!-- Tabs for CSV vs manual -->
           <div class="tabs">
-            <button class="tab active" data-tab="ai">Ask Claude</button>
+            <button class="tab active" data-tab="csv">CSV Upload</button>
             <button class="tab" data-tab="manual">Manual Entry</button>
           </div>
 
-          <!-- AI Tab -->
-          <div id="tab-ai" class="tab-content active">
-            <label for="ai-input">Paste or describe sessions</label>
-            <textarea id="ai-input" rows="5" placeholder="e.g. 'Keynote by Jane Doe on Monday March 9 from 9am to 10am in Hall A' or paste a full schedule..."></textarea>
-            <button id="ai-parse-btn" class="btn primary">Parse with Claude</button>
-            <div id="ai-status" class="status hidden"></div>
-            <div id="ai-results" class="hidden">
-              <h3>Parsed Sessions</h3>
-              <div id="ai-results-list"></div>
-              <button id="ai-add-all-btn" class="btn primary">Add All Sessions</button>
+          <!-- CSV Tab -->
+          <div id="tab-csv" class="tab-content active">
+            <label for="csv-file">Upload a CSV file</label>
+            <input type="file" id="csv-file" accept=".csv,text/csv">
+            <p class="hint">Expected columns: <strong>title, date, start, end, location, speaker, notes</strong><br>Date format: YYYY-MM-DD. Time format: HH:MM (24h). First row should be headers.</p>
+            <div id="csv-status" class="status hidden"></div>
+            <div id="csv-results" class="hidden">
+              <h3>Preview</h3>
+              <div id="csv-results-list"></div>
+              <button id="csv-add-all-btn" class="btn primary">Add All Sessions</button>
             </div>
           </div>
 
@@ -137,7 +134,7 @@
       <div id="schedule-list" class="schedule-list">
         <div class="empty-state" id="empty-state">
           <p>No sessions yet.</p>
-          <p>Tap <strong>+</strong> to add sessions manually or let Claude parse them for you.</p>
+          <p>Tap <strong>+</strong> to add sessions manually or upload a CSV.</p>
         </div>
       </div>
     </main>
