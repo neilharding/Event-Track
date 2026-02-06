@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>Event Schedule Tracker</title>
+  <title>MTCA 2026 Schedule</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="app">
     <header>
-      <h1>Event Schedule</h1>
+      <h1>MTCA 2026</h1>
       <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Settings">&#9881;</button>
     </header>
 
@@ -38,27 +38,6 @@
           <button class="close-btn" data-close="add-modal">&times;</button>
         </div>
         <div class="modal-body">
-          <!-- Tabs for CSV vs manual -->
-          <div class="tabs">
-            <button class="tab active" data-tab="csv">CSV Upload</button>
-            <button class="tab" data-tab="manual">Manual Entry</button>
-          </div>
-
-          <!-- CSV Tab -->
-          <div id="tab-csv" class="tab-content active">
-            <label for="csv-file">Upload a CSV file</label>
-            <input type="file" id="csv-file" accept=".csv,text/csv">
-            <p class="hint">Expected columns: <strong>Time, Student, Type, Room, Title</strong><br>Times can be AM/PM (e.g. 8:15 AM). A day label row (e.g. SATURDAY) groups sessions by day.</p>
-            <div id="csv-status" class="status hidden"></div>
-            <div id="csv-results" class="hidden">
-              <h3>Preview</h3>
-              <div id="csv-results-list"></div>
-              <button id="csv-add-all-btn" class="btn primary">Add All Sessions</button>
-            </div>
-          </div>
-
-          <!-- Manual Tab -->
-          <div id="tab-manual" class="tab-content hidden">
             <label for="manual-title">Title</label>
             <input type="text" id="manual-title" placeholder="Session title">
             <label for="manual-date">Date</label>
@@ -80,7 +59,6 @@
             <label for="manual-notes">Notes</label>
             <textarea id="manual-notes" rows="2" placeholder="Optional notes"></textarea>
             <button id="manual-add-btn" class="btn primary">Add Session</button>
-          </div>
         </div>
       </div>
     </div>
@@ -134,12 +112,13 @@
       <div id="schedule-list" class="schedule-list">
         <div class="empty-state" id="empty-state">
           <p>No sessions yet.</p>
-          <p>Tap <strong>+</strong> to add sessions manually or upload a CSV.</p>
+          <p>Tap <strong>+</strong> to add a session.</p>
         </div>
       </div>
     </main>
   </div>
 
+  <script src="schedule-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

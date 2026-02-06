@@ -29,8 +29,13 @@
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
 
-  // ── State ──
+  // ── Seed from embedded schedule on first load ──
   let sessions = loadSessions();
+  if (sessions.length === 0 && typeof MTCA_SCHEDULE !== 'undefined') {
+    sessions = MTCA_SCHEDULE.map(s => ({ ...s, id: generateId(), starred: false }));
+    saveSessions(sessions);
+  }
+
   let activeDay = 'all';
 
   // ── DOM refs ──
@@ -47,16 +52,6 @@
 
   // Add modal
   const addModal = document.getElementById('add-modal');
-  const tabs = document.querySelectorAll('.tab');
-  const tabCsv = document.getElementById('tab-csv');
-  const tabManual = document.getElementById('tab-manual');
-
-  // CSV controls
-  const csvFile = document.getElementById('csv-file');
-  const csvStatus = document.getElementById('csv-status');
-  const csvResults = document.getElementById('csv-results');
-  const csvResultsList = document.getElementById('csv-results-list');
-  const csvAddAllBtn = document.getElementById('csv-add-all-btn');
 
   // Manual controls
   const manualTitle = document.getElementById('manual-title');
@@ -92,7 +87,6 @@
 
   function formatDateHeading(dateStr) {
     if (!dateStr) return 'No Date';
-    // If it's a day name like "Saturday" rather than a YYYY-MM-DD date
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
     const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -101,7 +95,6 @@
   function formatDayTab(dateStr) {
     if (!dateStr) return '?';
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      // Abbreviate day name: "Saturday" -> "Sat"
       return dateStr.length > 3 ? dateStr.slice(0, 3) : dateStr;
     }
     const d = new Date(dateStr + 'T00:00:00');
@@ -110,15 +103,10 @@
 
   // ── Render ──
   function render() {
-    // Sort sessions by date then start time
     sessions.sort((a, b) => {
       if (a.date !== b.date) return (a.date || '').localeCompare(b.date || '');
       return (a.start || '').localeCompare(b.start || '');
     });
-
-    // Update header with event name
-    const settings = loadSettings();
-    document.querySelector('header h1').textContent = settings.eventName || 'Event Schedule';
 
     // Build day tabs
     const days = [...new Set(sessions.map(s => s.date).filter(Boolean))].sort();
@@ -137,7 +125,6 @@
     if (filtered.length === 0) {
       emptyState.classList.remove('hidden');
       emptyState.style.display = '';
-      // Remove day groups
       scheduleList.querySelectorAll('.day-group').forEach(el => el.remove());
       return;
     }
@@ -178,7 +165,6 @@
       html += `</div>`;
     });
 
-    // Preserve empty state element
     scheduleList.querySelectorAll('.day-group').forEach(el => el.remove());
     scheduleList.insertAdjacentHTML('beforeend', html);
   }
@@ -198,7 +184,6 @@
     modal.classList.add('hidden');
   }
 
-  // Close modals on backdrop click
   document.querySelectorAll('.modal').forEach(m => {
     m.addEventListener('click', e => {
       if (e.target === m) closeModal(m);
@@ -227,11 +212,6 @@
 
   // ── Add Session Modal ──
   addBtn.addEventListener('click', () => {
-    // Reset forms
-    csvFile.value = '';
-    csvStatus.classList.add('hidden');
-    csvResults.classList.add('hidden');
-    csvResultsList.innerHTML = '';
     manualTitle.value = '';
     manualDate.value = '';
     manualStart.value = '';
@@ -240,21 +220,6 @@
     manualSpeaker.value = '';
     manualNotes.value = '';
     openModal(addModal);
-  });
-
-  // Tabs
-  tabs.forEach(t => {
-    t.addEventListener('click', () => {
-      tabs.forEach(x => x.classList.remove('active'));
-      t.classList.add('active');
-      if (t.dataset.tab === 'csv') {
-        tabCsv.classList.add('active');
-        tabManual.classList.remove('active');
-      } else {
-        tabManual.classList.add('active');
-        tabCsv.classList.remove('active');
-      }
-    });
   });
 
   // ── Manual Add ──
@@ -277,171 +242,8 @@
     render();
   });
 
-  // ── CSV Upload ──
-  let parsedSessions = [];
-
-  // Day-of-week names used as section headers in the spreadsheet
-  const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-
-  function parseTimeToHHMM(raw) {
-    if (!raw) return '';
-    raw = raw.trim();
-    // Already in HH:MM 24h format
-    if (/^\d{1,2}:\d{2}$/.test(raw)) return raw.padStart(5, '0');
-    // AM/PM format: "8:15 AM", "12:30 PM", "9:00AM"
-    const match = raw.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-    if (match) {
-      let h = parseInt(match[1], 10);
-      const m = match[2];
-      const ampm = match[3].toUpperCase();
-      if (ampm === 'PM' && h !== 12) h += 12;
-      if (ampm === 'AM' && h === 12) h = 0;
-      return h.toString().padStart(2, '0') + ':' + m;
-    }
-    return raw;
-  }
-
-  function parseCSV(text) {
-    const lines = text.split(/\r?\n/).filter(line => line.trim());
-    if (lines.length < 2) throw new Error('CSV must have a header row and at least one data row.');
-
-    // Find the header row — skip day-label rows like "SATURDAY" or "FRIDAY"
-    let headerIdx = 0;
-    let currentDay = '';
-    for (let i = 0; i < lines.length; i++) {
-      const cols = parseCSVRow(lines[i]);
-      const first = (cols[0] || '').trim().toLowerCase();
-      if (DAY_NAMES.includes(first) && cols.filter(c => c.trim()).length <= 1) {
-        currentDay = cols[0].trim();
-        headerIdx = i + 1;
-        continue;
-      }
-      break;
-    }
-
-    if (headerIdx >= lines.length) throw new Error('Could not find header row in CSV.');
-
-    const headers = parseCSVRow(lines[headerIdx]).map(h => h.trim().toLowerCase());
-    const colMap = {};
-    headers.forEach((h, i) => {
-      if (h === 'title' || h === 'name' || h === 'session') colMap.title = i;
-      else if (h === 'time' || h === 'start' || h === 'start time' || h === 'start_time' || h === 'from') colMap.time = i;
-      else if (h === 'end' || h === 'end time' || h === 'end_time' || h === 'to') colMap.end = i;
-      else if (h === 'student' || h === 'speaker' || h === 'presenter' || h === 'performer' || h === 'author') colMap.student = i;
-      else if (h === 'type' || h === 'category' || h === 'style') colMap.type = i;
-      else if (h === 'room' || h === 'location' || h === 'hall' || h === 'venue' || h === 'track') colMap.room = i;
-      else if (h === 'date' || h === 'day') colMap.date = i;
-      else if (h === 'notes' || h === 'description' || h === 'details') colMap.notes = i;
-    });
-
-    if (colMap.title === undefined) throw new Error('CSV must have a "Title" (or "Name" / "Session") column.');
-
-    const results = [];
-    for (let i = headerIdx + 1; i < lines.length; i++) {
-      const cols = parseCSVRow(lines[i]);
-      const first = (cols[0] || '').trim().toLowerCase();
-
-      // Check for day-label rows mid-file (multi-day spreadsheets)
-      if (DAY_NAMES.includes(first) && cols.filter(c => c.trim()).length <= 1) {
-        currentDay = cols[0].trim();
-        continue;
-      }
-
-      const get = key => (colMap[key] !== undefined ? (cols[colMap[key]] || '').trim() : '');
-      const title = get('title');
-      if (!title) continue;
-
-      // Use explicit date column if present, otherwise fall back to the day label
-      const dateVal = get('date') || currentDay;
-
-      results.push({
-        title,
-        date: dateVal,
-        start: parseTimeToHHMM(get('time')),
-        end: parseTimeToHHMM(get('end')),
-        location: get('room'),
-        speaker: get('student'),
-        type: get('type'),
-        notes: get('notes'),
-      });
-    }
-    return results;
-  }
-
-  function parseCSVRow(line) {
-    const cols = [];
-    let cur = '';
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (inQuotes) {
-        if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
-        else if (ch === '"') { inQuotes = false; }
-        else { cur += ch; }
-      } else {
-        if (ch === '"') { inQuotes = true; }
-        else if (ch === ',') { cols.push(cur); cur = ''; }
-        else { cur += ch; }
-      }
-    }
-    cols.push(cur);
-    return cols;
-  }
-
-  csvFile.addEventListener('change', () => {
-    const file = csvFile.files[0];
-    if (!file) return;
-
-    csvStatus.classList.add('hidden');
-    csvResults.classList.add('hidden');
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        parsedSessions = parseCSV(reader.result);
-        if (parsedSessions.length === 0) {
-          csvStatus.textContent = 'No sessions found in the CSV. Make sure there is data below the header row.';
-          csvStatus.className = 'status error';
-          csvStatus.classList.remove('hidden');
-          return;
-        }
-
-        csvStatus.textContent = `Found ${parsedSessions.length} session(s).`;
-        csvStatus.className = 'status success';
-        csvStatus.classList.remove('hidden');
-
-        csvResultsList.innerHTML = '';
-        parsedSessions.forEach(s => {
-          const div = document.createElement('div');
-          div.className = 'csv-session-preview';
-          const timeStr = formatTime(s.start) + (s.end ? ' - ' + formatTime(s.end) : '');
-          const meta = [s.date, timeStr, s.type, s.location, s.speaker].filter(Boolean).join(' \u00b7 ');
-          div.innerHTML = `<div class="preview-title">${esc(s.title)}</div><div class="preview-meta">${esc(meta)}</div>`;
-          csvResultsList.appendChild(div);
-        });
-        csvResults.classList.remove('hidden');
-      } catch (err) {
-        csvStatus.textContent = 'Error: ' + err.message;
-        csvStatus.className = 'status error';
-        csvStatus.classList.remove('hidden');
-      }
-    };
-    reader.readAsText(file);
-  });
-
-  csvAddAllBtn.addEventListener('click', () => {
-    parsedSessions.forEach(s => {
-      sessions.push({ ...s, id: generateId(), starred: false });
-    });
-    saveSessions(sessions);
-    parsedSessions = [];
-    closeModal(addModal);
-    render();
-  });
-
   // ── Edit Session ──
   scheduleList.addEventListener('click', e => {
-    // Star toggle
     const starBtn = e.target.closest('[data-star]');
     if (starBtn) {
       e.stopPropagation();
@@ -455,7 +257,6 @@
       return;
     }
 
-    // Card click -> edit
     const card = e.target.closest('.session-card');
     if (!card) return;
     const id = card.dataset.id;
