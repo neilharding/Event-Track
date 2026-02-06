@@ -123,6 +123,15 @@ header h1 {
   color: #fff;
   border-color: var(--primary);
 }
+.day-btn.starred-btn {
+  color: #b8860b;
+  border-color: #e6c847;
+}
+.day-btn.starred-btn.active {
+  background: #f5c518;
+  color: #1c1c1e;
+  border-color: #f5c518;
+}
 
 /* ── Schedule List ── */
 .schedule-list {

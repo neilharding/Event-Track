@@ -3,7 +3,6 @@
 
   // ── Storage helpers ──
   const STORAGE_KEY = 'event-schedule-sessions';
-  const SETTINGS_KEY = 'event-schedule-settings';
 
   function loadSessions() {
     try {
@@ -13,16 +12,6 @@
 
   function saveSessions(sessions) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
-  }
-
-  function loadSettings() {
-    try {
-      return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
-    } catch { return {}; }
-  }
-
-  function saveSettings(settings) {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   }
 
   function generateId() {
@@ -43,12 +32,6 @@
   const emptyState = document.getElementById('empty-state');
   const dayFilter = document.getElementById('day-filter');
   const addBtn = document.getElementById('add-btn');
-  const settingsBtn = document.getElementById('settings-btn');
-
-  // Settings modal
-  const settingsModal = document.getElementById('settings-modal');
-  const eventNameInput = document.getElementById('event-name-input');
-  const saveSettingsBtn = document.getElementById('save-settings-btn');
 
   // Add modal
   const addModal = document.getElementById('add-modal');
@@ -109,6 +92,7 @@
     });
 
     // Build day tabs
+    const starCount = sessions.filter(s => s.starred).length;
     const days = [...new Set(sessions.map(s => s.date).filter(Boolean))].sort();
     dayFilter.innerHTML = '<button class="day-btn' + (activeDay === 'all' ? ' active' : '') + '" data-day="all">All</button>';
     days.forEach(d => {
@@ -118,9 +102,21 @@
       btn.textContent = formatDayTab(d);
       dayFilter.appendChild(btn);
     });
+    const starBtn = document.createElement('button');
+    starBtn.className = 'day-btn starred-btn' + (activeDay === 'starred' ? ' active' : '');
+    starBtn.dataset.day = 'starred';
+    starBtn.innerHTML = '&#9733; ' + starCount;
+    dayFilter.appendChild(starBtn);
 
     // Filter
-    const filtered = activeDay === 'all' ? sessions : sessions.filter(s => s.date === activeDay);
+    let filtered;
+    if (activeDay === 'starred') {
+      filtered = sessions.filter(s => s.starred);
+    } else if (activeDay === 'all') {
+      filtered = sessions;
+    } else {
+      filtered = sessions.filter(s => s.date === activeDay);
+    }
 
     if (filtered.length === 0) {
       emptyState.classList.remove('hidden');
@@ -191,21 +187,6 @@
     btn.addEventListener('click', () => {
       closeModal(document.getElementById(btn.dataset.close));
     });
-  });
-
-  // ── Settings ──
-  settingsBtn.addEventListener('click', () => {
-    const s = loadSettings();
-    eventNameInput.value = s.eventName || '';
-    openModal(settingsModal);
-  });
-
-  saveSettingsBtn.addEventListener('click', () => {
-    const s = loadSettings();
-    s.eventName = eventNameInput.value.trim();
-    saveSettings(s);
-    closeModal(settingsModal);
-    render();
   });
 
   // ── Add Session Modal ──
