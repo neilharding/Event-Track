@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Event Schedule Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Event Schedule</h1>
+      <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Settings">&#9881;</button>
+    </header>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Settings</h2>
+          <button class="close-btn" data-close="settings-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <label for="api-key-input">Anthropic API Key</label>
+          <input type="password" id="api-key-input" placeholder="sk-ant-...">
+          <p class="hint">Your key is stored locally in your browser and never sent anywhere except the Anthropic API.</p>
+          <label for="event-name-input">Event Name</label>
+          <input type="text" id="event-name-input" placeholder="e.g. React Summit 2026">
+          <button id="save-settings-btn" class="btn primary">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Session Modal -->
+    <div id="add-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Add Session</h2>
+          <button class="close-btn" data-close="add-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <!-- Tabs for manual vs AI -->
+          <div class="tabs">
+            <button class="tab active" data-tab="ai">Ask Claude</button>
+            <button class="tab" data-tab="manual">Manual Entry</button>
+          </div>
+
+          <!-- AI Tab -->
+          <div id="tab-ai" class="tab-content active">
+            <label for="ai-input">Paste or describe sessions</label>
+            <textarea id="ai-input" rows="5" placeholder="e.g. 'Keynote by Jane Doe on Monday March 9 from 9am to 10am in Hall A' or paste a full schedule..."></textarea>
+            <button id="ai-parse-btn" class="btn primary">Parse with Claude</button>
+            <div id="ai-status" class="status hidden"></div>
+            <div id="ai-results" class="hidden">
+              <h3>Parsed Sessions</h3>
+              <div id="ai-results-list"></div>
+              <button id="ai-add-all-btn" class="btn primary">Add All Sessions</button>
+            </div>
+          </div>
+
+          <!-- Manual Tab -->
+          <div id="tab-manual" class="tab-content hidden">
+            <label for="manual-title">Title</label>
+            <input type="text" id="manual-title" placeholder="Session title">
+            <label for="manual-date">Date</label>
+            <input type="date" id="manual-date">
+            <div class="time-row">
+              <div>
+                <label for="manual-start">Start</label>
+                <input type="time" id="manual-start">
+              </div>
+              <div>
+                <label for="manual-end">End</label>
+                <input type="time" id="manual-end">
+              </div>
+            </div>
+            <label for="manual-location">Location</label>
+            <input type="text" id="manual-location" placeholder="Room / Hall">
+            <label for="manual-speaker">Speaker</label>
+            <input type="text" id="manual-speaker" placeholder="Speaker name">
+            <label for="manual-notes">Notes</label>
+            <textarea id="manual-notes" rows="2" placeholder="Optional notes"></textarea>
+            <button id="manual-add-btn" class="btn primary">Add Session</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Session Modal -->
+    <div id="edit-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Session</h2>
+          <button class="close-btn" data-close="edit-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="edit-id">
+          <label for="edit-title">Title</label>
+          <input type="text" id="edit-title">
+          <label for="edit-date">Date</label>
+          <input type="date" id="edit-date">
+          <div class="time-row">
+            <div>
+              <label for="edit-start">Start</label>
+              <input type="time" id="edit-start">
+            </div>
+            <div>
+              <label for="edit-end">End</label>
+              <input type="time" id="edit-end">
+            </div>
+          </div>
+          <label for="edit-location">Location</label>
+          <input type="text" id="edit-location">
+          <label for="edit-speaker">Speaker</label>
+          <input type="text" id="edit-speaker">
+          <label for="edit-notes">Notes</label>
+          <textarea id="edit-notes" rows="2"></textarea>
+          <div class="edit-actions">
+            <button id="edit-save-btn" class="btn primary">Save Changes</button>
+            <button id="edit-delete-btn" class="btn danger">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main>
+      <div class="toolbar">
+        <div class="day-filter" id="day-filter">
+          <button class="day-btn active" data-day="all">All</button>
+          <!-- Day buttons populated dynamically -->
+        </div>
+        <button id="add-btn" class="btn primary fab" title="Add Session" aria-label="Add session">+</button>
+      </div>
+      <div id="schedule-list" class="schedule-list">
+        <div class="empty-state" id="empty-state">
+          <p>No sessions yet.</p>
+          <p>Tap <strong>+</strong> to add sessions manually or let Claude parse them for you.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
