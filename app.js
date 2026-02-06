@@ -92,12 +92,18 @@
 
   function formatDateHeading(dateStr) {
     if (!dateStr) return 'No Date';
+    // If it's a day name like "Saturday" rather than a YYYY-MM-DD date
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
     const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   }
 
   function formatDayTab(dateStr) {
     if (!dateStr) return '?';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      // Abbreviate day name: "Saturday" -> "Sat"
+      return dateStr.length > 3 ? dateStr.slice(0, 3) : dateStr;
+    }
     const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
   }
@@ -154,6 +160,7 @@
       groups[dateKey].forEach(s => {
         const metaParts = [];
         if (s.speaker) metaParts.push(`<span>${esc(s.speaker)}</span>`);
+        if (s.type) metaParts.push(`<span>${esc(s.type)}</span>`);
         if (s.location) metaParts.push(`<span>${esc(s.location)}</span>`);
         html += `
           <div class="session-card" data-id="${s.id}">
@@ -273,41 +280,88 @@
   // ── CSV Upload ──
   let parsedSessions = [];
 
+  // Day-of-week names used as section headers in the spreadsheet
+  const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+  function parseTimeToHHMM(raw) {
+    if (!raw) return '';
+    raw = raw.trim();
+    // Already in HH:MM 24h format
+    if (/^\d{1,2}:\d{2}$/.test(raw)) return raw.padStart(5, '0');
+    // AM/PM format: "8:15 AM", "12:30 PM", "9:00AM"
+    const match = raw.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (match) {
+      let h = parseInt(match[1], 10);
+      const m = match[2];
+      const ampm = match[3].toUpperCase();
+      if (ampm === 'PM' && h !== 12) h += 12;
+      if (ampm === 'AM' && h === 12) h = 0;
+      return h.toString().padStart(2, '0') + ':' + m;
+    }
+    return raw;
+  }
+
   function parseCSV(text) {
     const lines = text.split(/\r?\n/).filter(line => line.trim());
     if (lines.length < 2) throw new Error('CSV must have a header row and at least one data row.');
 
-    const headerLine = lines[0];
-    const headers = parseCSVRow(headerLine).map(h => h.trim().toLowerCase());
+    // Find the header row — skip day-label rows like "SATURDAY" or "FRIDAY"
+    let headerIdx = 0;
+    let currentDay = '';
+    for (let i = 0; i < lines.length; i++) {
+      const cols = parseCSVRow(lines[i]);
+      const first = (cols[0] || '').trim().toLowerCase();
+      if (DAY_NAMES.includes(first) && cols.filter(c => c.trim()).length <= 1) {
+        currentDay = cols[0].trim();
+        headerIdx = i + 1;
+        continue;
+      }
+      break;
+    }
 
-    const knownFields = ['title', 'date', 'start', 'end', 'location', 'speaker', 'notes'];
+    if (headerIdx >= lines.length) throw new Error('Could not find header row in CSV.');
+
+    const headers = parseCSVRow(lines[headerIdx]).map(h => h.trim().toLowerCase());
     const colMap = {};
     headers.forEach((h, i) => {
-      // Match common synonyms
       if (h === 'title' || h === 'name' || h === 'session') colMap.title = i;
-      else if (h === 'date' || h === 'day') colMap.date = i;
-      else if (h === 'start' || h === 'start time' || h === 'start_time' || h === 'from') colMap.start = i;
+      else if (h === 'time' || h === 'start' || h === 'start time' || h === 'start_time' || h === 'from') colMap.time = i;
       else if (h === 'end' || h === 'end time' || h === 'end_time' || h === 'to') colMap.end = i;
-      else if (h === 'location' || h === 'room' || h === 'hall' || h === 'venue' || h === 'track') colMap.location = i;
-      else if (h === 'speaker' || h === 'presenter' || h === 'author') colMap.speaker = i;
+      else if (h === 'student' || h === 'speaker' || h === 'presenter' || h === 'performer' || h === 'author') colMap.student = i;
+      else if (h === 'type' || h === 'category' || h === 'style') colMap.type = i;
+      else if (h === 'room' || h === 'location' || h === 'hall' || h === 'venue' || h === 'track') colMap.room = i;
+      else if (h === 'date' || h === 'day') colMap.date = i;
       else if (h === 'notes' || h === 'description' || h === 'details') colMap.notes = i;
     });
 
-    if (colMap.title === undefined) throw new Error('CSV must have a "title" (or "name" / "session") column.');
+    if (colMap.title === undefined) throw new Error('CSV must have a "Title" (or "Name" / "Session") column.');
 
     const results = [];
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = headerIdx + 1; i < lines.length; i++) {
       const cols = parseCSVRow(lines[i]);
+      const first = (cols[0] || '').trim().toLowerCase();
+
+      // Check for day-label rows mid-file (multi-day spreadsheets)
+      if (DAY_NAMES.includes(first) && cols.filter(c => c.trim()).length <= 1) {
+        currentDay = cols[0].trim();
+        continue;
+      }
+
       const get = key => (colMap[key] !== undefined ? (cols[colMap[key]] || '').trim() : '');
       const title = get('title');
       if (!title) continue;
+
+      // Use explicit date column if present, otherwise fall back to the day label
+      const dateVal = get('date') || currentDay;
+
       results.push({
         title,
-        date: get('date'),
-        start: get('start'),
-        end: get('end'),
-        location: get('location'),
-        speaker: get('speaker'),
+        date: dateVal,
+        start: parseTimeToHHMM(get('time')),
+        end: parseTimeToHHMM(get('end')),
+        location: get('room'),
+        speaker: get('student'),
+        type: get('type'),
         notes: get('notes'),
       });
     }
@@ -359,8 +413,9 @@
         csvResultsList.innerHTML = '';
         parsedSessions.forEach(s => {
           const div = document.createElement('div');
-          div.className = 'ai-session-preview';
-          const meta = [s.date, formatTime(s.start) + (s.end ? ' - ' + formatTime(s.end) : ''), s.location, s.speaker].filter(Boolean).join(' \u00b7 ');
+          div.className = 'csv-session-preview';
+          const timeStr = formatTime(s.start) + (s.end ? ' - ' + formatTime(s.end) : '');
+          const meta = [s.date, timeStr, s.type, s.location, s.speaker].filter(Boolean).join(' \u00b7 ');
           div.innerHTML = `<div class="preview-title">${esc(s.title)}</div><div class="preview-meta">${esc(meta)}</div>`;
           csvResultsList.appendChild(div);
         });
