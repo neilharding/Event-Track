@@ -18,11 +18,20 @@
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
 
-  // ── Seed from embedded schedule on first load ──
+  // ── Seed from embedded schedule ──
+  const SEED_VERSION_KEY = 'event-schedule-seed-version';
+  const CURRENT_SEED = '2026-02-06-mtca-v1';
   let sessions = loadSessions();
-  if (sessions.length === 0 && typeof MTCA_SCHEDULE !== 'undefined') {
-    sessions = MTCA_SCHEDULE.map(s => ({ ...s, id: generateId(), starred: false }));
+  if (typeof MTCA_SCHEDULE !== 'undefined' && localStorage.getItem(SEED_VERSION_KEY) !== CURRENT_SEED) {
+    // Preserve any existing stars
+    const starredIds = new Set(sessions.filter(s => s.starred).map(s => s.title));
+    sessions = MTCA_SCHEDULE.map(s => ({
+      ...s,
+      id: generateId(),
+      starred: starredIds.has(s.title),
+    }));
     saveSessions(sessions);
+    localStorage.setItem(SEED_VERSION_KEY, CURRENT_SEED);
   }
 
   let activeDay = 'all';
