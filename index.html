@@ -6,12 +6,16 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <title>MTCA 2026 Schedule</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="app">
     <header>
       <h1>MTCA 2026</h1>
+      <div class="subtitle">Musical Theater Competition</div>
     </header>
 
     <!-- Add Session Modal -->
@@ -95,8 +99,9 @@
       </div>
       <div id="schedule-list" class="schedule-list">
         <div class="empty-state" id="empty-state">
-          <p>No sessions yet.</p>
-          <p>Tap <strong>+</strong> to add a session.</p>
+          <div class="theater-icon">&#127917;</div>
+          <p>The stage is empty.</p>
+          <p>Tap <strong>+</strong> to add a performance.</p>
         </div>
       </div>
     </main>
