@@ -285,7 +285,7 @@ const MTCA_AWARDS = [
   },
   {
     "type": "GROUP - Medley",
-    "level": "Open Intermediate",
+    "level": "Open Advanced",
     "performers": [
       {"speaker": "STAR WARS", "title": "1980S MUSICALS BRITISH INVASION"}
     ]
