@@ -311,6 +311,19 @@
     if (tab === 'awards') renderAwards();
   });
 
+  // ── Award Filters ──
+  const awardFilters = document.getElementById('award-filters');
+  let activeAwardFilter = 'all';
+
+  awardFilters.addEventListener('click', e => {
+    const btn = e.target.closest('.award-filter-btn');
+    if (!btn) return;
+    activeAwardFilter = btn.dataset.filter;
+    awardFilters.querySelectorAll('.award-filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+    awardsList.innerHTML = '';
+    renderAwards();
+  });
+
   // ── Awards Rendering ──
   const awardsList = document.getElementById('awards-list');
 
@@ -322,6 +335,7 @@
 
     MTCA_AWARDS.forEach((cat, i) => {
       const baseType = cat.type.startsWith('GROUP') ? 'GROUP' : cat.type;
+      if (activeAwardFilter !== 'all' && baseType !== activeAwardFilter) return;
       if (baseType !== currentType) {
         currentType = baseType;
         html += `<div class="award-type-heading">${esc(currentType)}</div>`;

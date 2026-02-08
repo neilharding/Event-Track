@@ -421,6 +421,33 @@ header .subtitle {
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
+/* ── Award Filters ── */
+.award-filters {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.award-filter-btn {
+  padding: 4px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.award-filter-btn.active {
+  background: var(--gold);
+  color: #1a1018;
+  border-color: var(--gold);
+}
+
 /* ── Awards List ── */
 .awards-list {
   padding: 8px 16px 100px;

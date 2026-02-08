@@ -278,7 +278,7 @@ const MTCA_AWARDS = [
   },
   {
     "type": "GROUP - Musical Production",
-    "level": "Open Intermediate",
+    "level": "Open Intermediate (or Advanced?)",
     "performers": [
       {"speaker": "OLIVER", "title": "OLIVER"}
     ]
