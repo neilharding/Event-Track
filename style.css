@@ -422,12 +422,14 @@ header .subtitle {
 .tab-panel.active { display: block; }
 
 /* ── Award Filters ── */
+.award-filters.hidden { display: none; }
 .award-filters {
   display: flex;
   gap: 6px;
   padding: 10px 16px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  background: var(--bg);
 }
 .award-filter-btn {
   padding: 4px 10px;

@@ -308,6 +308,7 @@
     const tab = btn.dataset.tab;
     tabBar.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
     tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + tab));
+    awardFilters.classList.toggle('hidden', tab !== 'awards');
     if (tab === 'awards') renderAwards();
   });
 

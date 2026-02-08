@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
   <div id="app">
@@ -24,6 +24,15 @@
         <button class="tab-btn" data-tab="schedule">Schedule</button>
         <button class="tab-btn active" data-tab="awards">Awards</button>
       </nav>
+      <div class="award-filters" id="award-filters">
+        <button class="award-filter-btn active" data-filter="all">All</button>
+        <button class="award-filter-btn" data-filter="SOLO">Solo</button>
+        <button class="award-filter-btn" data-filter="MONO">Mono</button>
+        <button class="award-filter-btn" data-filter="DUET">Duet</button>
+        <button class="award-filter-btn" data-filter="DANCE">Dance</button>
+        <button class="award-filter-btn" data-filter="HAIR">Hair</button>
+        <button class="award-filter-btn" data-filter="GROUP">Group</button>
+      </div>
     </div>
 
     <!-- Add Session Modal -->
@@ -117,15 +126,6 @@
 
       <!-- Awards Tab -->
       <div id="tab-awards" class="tab-panel active">
-        <div class="award-filters" id="award-filters">
-          <button class="award-filter-btn active" data-filter="all">All</button>
-          <button class="award-filter-btn" data-filter="SOLO">Solo</button>
-          <button class="award-filter-btn" data-filter="MONO">Mono</button>
-          <button class="award-filter-btn" data-filter="DUET">Duet</button>
-          <button class="award-filter-btn" data-filter="DANCE">Dance</button>
-          <button class="award-filter-btn" data-filter="HAIR">Hair</button>
-          <button class="award-filter-btn" data-filter="GROUP">Group</button>
-        </div>
         <div id="awards-list" class="awards-list"></div>
       </div>
     </main>
@@ -133,6 +133,6 @@
 
   <script src="schedule-data2.js?v=2"></script>
   <script src="awards.js?v=3"></script>
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
