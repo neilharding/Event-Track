@@ -321,27 +321,40 @@
     let currentType = '';
 
     MTCA_AWARDS.forEach((cat, i) => {
-      if (cat.type !== currentType) {
-        currentType = cat.type;
+      const baseType = cat.type.startsWith('GROUP') ? 'GROUP' : cat.type;
+      if (baseType !== currentType) {
+        currentType = baseType;
         html += `<div class="award-type-heading">${esc(currentType)}</div>`;
       }
+      const badgeClass = cat.type.startsWith('GROUP') ? 'GROUP' : cat.type;
       html += `<div class="award-category" data-award="${i}">`;
       html += `<div class="award-category-header">`;
-      html += `<span class="award-type-badge ${esc(cat.type)}">${esc(cat.type)}</span>`;
+      html += `<span class="award-type-badge ${esc(badgeClass)}">${esc(cat.type)}</span>`;
       html += `<span class="award-level">${esc(cat.level)}</span>`;
       html += `</div>`;
-      Object.keys(cat.days).forEach(day => {
-        html += `<div class="award-day-group">`;
-        html += `<div class="award-day-label">${esc(day)}</div>`;
-        html += `<div class="award-performers">`;
-        cat.days[day].forEach(p => {
+      if (cat.performers) {
+        html += `<div class="award-performers" style="padding:0 12px 8px">`;
+        cat.performers.forEach(p => {
           html += `<div class="award-performer">`;
           html += `<span class="award-performer-name">${esc(p.speaker)}</span>`;
           html += `<span class="award-performer-title">${esc(p.title)}</span>`;
           html += `</div>`;
         });
-        html += `</div></div>`;
-      });
+        html += `</div>`;
+      } else {
+        Object.keys(cat.days).forEach(day => {
+          html += `<div class="award-day-group">`;
+          html += `<div class="award-day-label">${esc(day)}</div>`;
+          html += `<div class="award-performers">`;
+          cat.days[day].forEach(p => {
+            html += `<div class="award-performer">`;
+            html += `<span class="award-performer-name">${esc(p.speaker)}</span>`;
+            html += `<span class="award-performer-title">${esc(p.title)}</span>`;
+            html += `</div>`;
+          });
+          html += `</div></div>`;
+        });
+      }
       html += `</div>`;
     });
 

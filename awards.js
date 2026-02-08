@@ -277,24 +277,24 @@ const MTCA_AWARDS = [
     }
   },
   {
-    "type": "GROUP",
+    "type": "GROUP - Musical Production",
     "level": "Open Intermediate",
-    "days": {
-      "Friday": [
-        {"speaker": "OLIVER", "title": "OLIVER"}
-      ],
-      "Saturday": [
-        {"speaker": "STAR WARS", "title": "1980S MUSICALS BRITISH INVASION"}
-      ]
-    }
+    "performers": [
+      {"speaker": "OLIVER", "title": "OLIVER"}
+    ]
   },
   {
-    "type": "GROUP",
+    "type": "GROUP - Medley",
+    "level": "Open Intermediate",
+    "performers": [
+      {"speaker": "STAR WARS", "title": "1980S MUSICALS BRITISH INVASION"}
+    ]
+  },
+  {
+    "type": "GROUP - Showtune",
     "level": "Open Advanced",
-    "days": {
-      "Saturday": [
-        {"speaker": "FACADE", "title": "FACADE"}
-      ]
-    }
+    "performers": [
+      {"speaker": "FACADE", "title": "FACADE"}
+    ]
   }
 ];
