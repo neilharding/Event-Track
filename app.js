@@ -298,6 +298,57 @@
     render();
   });
 
+  // ── Tab Switching ──
+  const tabBar = document.querySelector('.tab-bar');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+
+  tabBar.addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    const tab = btn.dataset.tab;
+    tabBar.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + tab));
+    if (tab === 'awards') renderAwards();
+  });
+
+  // ── Awards Rendering ──
+  const awardsList = document.getElementById('awards-list');
+
+  function renderAwards() {
+    if (typeof MTCA_AWARDS === 'undefined' || awardsList.children.length > 0) return;
+
+    let html = '';
+    let currentType = '';
+
+    MTCA_AWARDS.forEach((cat, i) => {
+      if (cat.type !== currentType) {
+        currentType = cat.type;
+        html += `<div class="award-type-heading">${esc(currentType)}</div>`;
+      }
+      html += `<div class="award-category" data-award="${i}">`;
+      html += `<div class="award-category-header">`;
+      html += `<span class="award-type-badge ${esc(cat.type)}">${esc(cat.type)}</span>`;
+      html += `<span class="award-level">${esc(cat.level)}</span>`;
+      html += `</div>`;
+      Object.keys(cat.days).forEach(day => {
+        html += `<div class="award-day-group">`;
+        html += `<div class="award-day-label">${esc(day)}</div>`;
+        html += `<div class="award-performers">`;
+        cat.days[day].forEach(p => {
+          html += `<div class="award-performer">`;
+          html += `<span class="award-performer-name">${esc(p.speaker)}</span>`;
+          html += `<span class="award-performer-title">${esc(p.title)}</span>`;
+          html += `</div>`;
+        });
+        html += `</div></div>`;
+      });
+      html += `</div>`;
+    });
+
+    awardsList.innerHTML = html;
+  }
+
   // ── Initial render ──
   render();
+  renderAwards();
 })();

@@ -13,10 +13,18 @@
 </head>
 <body>
   <div id="app">
-    <header>
-      <h1>MTCA 2026</h1>
-      <div class="subtitle">Musical Theater Competition</div>
-    </header>
+    <div class="sticky-top">
+      <header>
+        <h1>MTCA 2026</h1>
+        <div class="subtitle">Musical Theater Competition</div>
+      </header>
+
+      <!-- Tab Navigation -->
+      <nav class="tab-bar">
+        <button class="tab-btn" data-tab="schedule">Schedule</button>
+        <button class="tab-btn active" data-tab="awards">Awards</button>
+      </nav>
+    </div>
 
     <!-- Add Session Modal -->
     <div id="add-modal" class="modal hidden">
@@ -90,24 +98,32 @@
 
     <!-- Main Content -->
     <main>
-      <div class="toolbar">
-        <div class="day-filter" id="day-filter">
-          <button class="day-btn active" data-day="all">All</button>
-          <!-- Day + starred buttons populated dynamically -->
+      <!-- Schedule Tab -->
+      <div id="tab-schedule" class="tab-panel">
+        <div class="toolbar">
+          <div class="day-filter" id="day-filter">
+            <button class="day-btn active" data-day="all">All</button>
+          </div>
+          <button id="add-btn" class="btn primary fab" title="Add Session" aria-label="Add session">+</button>
         </div>
-        <button id="add-btn" class="btn primary fab" title="Add Session" aria-label="Add session">+</button>
+        <div id="schedule-list" class="schedule-list">
+          <div class="empty-state" id="empty-state">
+            <div class="theater-icon">&#127917;</div>
+            <p>The stage is empty.</p>
+            <p>Tap <strong>+</strong> to add a performance.</p>
+          </div>
+        </div>
       </div>
-      <div id="schedule-list" class="schedule-list">
-        <div class="empty-state" id="empty-state">
-          <div class="theater-icon">&#127917;</div>
-          <p>The stage is empty.</p>
-          <p>Tap <strong>+</strong> to add a performance.</p>
-        </div>
+
+      <!-- Awards Tab -->
+      <div id="tab-awards" class="tab-panel active">
+        <div id="awards-list" class="awards-list"></div>
       </div>
     </main>
   </div>
 
   <script src="schedule-data2.js"></script>
+  <script src="awards.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

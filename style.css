@@ -34,6 +34,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ── Sticky Top (Header + Tabs) ── */
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
 /* ── Header (Theater Marquee) ── */
 header {
   display: flex;
@@ -43,9 +50,6 @@ header {
   padding: 18px 20px 14px;
   background: linear-gradient(180deg, #2a0a14 0%, var(--primary-dark) 40%, var(--primary) 100%);
   color: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 100;
   border-bottom: 3px solid var(--gold);
   box-shadow: 0 2px 20px rgba(196, 30, 58, 0.3);
 }
@@ -386,6 +390,133 @@ header .subtitle {
   margin-top: 20px;
 }
 .edit-actions .btn { flex: 1; margin-top: 0; }
+
+/* ── Tab Bar ── */
+.tab-bar {
+  display: flex;
+  background: var(--bg-warm);
+  border-bottom: 1px solid var(--border);
+}
+.tab-btn {
+  flex: 1;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+/* ── Tab Panels ── */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Awards List ── */
+.awards-list {
+  padding: 8px 16px 100px;
+}
+.award-type-heading {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gold);
+  padding: 12px 0 6px;
+  border-bottom: 1px solid var(--border-gold);
+  margin-bottom: 6px;
+}
+.award-day-group {
+  padding: 0 12px 6px;
+}
+.award-day-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  padding: 4px 0 2px;
+}
+.award-category {
+  background: var(--surface);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.award-category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.award-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  flex-shrink: 0;
+}
+.award-type-badge.SOLO { background: var(--primary); }
+.award-type-badge.MONO { background: #6a4c93; }
+.award-type-badge.DUET { background: #1982c4; }
+.award-type-badge.DANCE { background: #8ac926; color: #1a1018; }
+.award-type-badge.GROUP { background: var(--gold-dim); color: #1a1018; }
+.award-type-badge.HAIR { background: #ff6b6b; }
+.award-level {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-warm);
+  flex: 1;
+}
+.award-count {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.award-performers {
+  padding: 0 12px 8px;
+}
+.award-performer {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  border-top: 1px solid var(--border);
+}
+.award-performer:first-child {
+  border-top: none;
+}
+.award-performer-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.award-performer-title {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
 
 /* ── Responsive ── */
 @media (min-width: 600px) {
